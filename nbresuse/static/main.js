@@ -9,6 +9,23 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             ).append(
                 $('<span>').attr('id', 'nbresuse-mem')
                            .attr('title', 'Actively used Memory (updates every 5s)')
+            ).append(
+                $('<strong>').text(' CPU: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-cpu')
+                           .attr('title', 'Actively used CPU (updates every 5s)')
+            ).append(
+                $('<br>')
+            ).append(
+                $('<strong>').text('GPU: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-gpu')
+                           .attr('title', 'GPU Utilization (updates every 5s)')
+            ).append(
+                $('<br>')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-broadcast')
+                           .attr('title', 'System broadcast (updates every 5s)')
             )
         );
         // FIXME: Do something cleaner to get styles in here?
@@ -40,6 +57,10 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             if (data['limits']['memory'] !== null) {
             }
             $('#nbresuse-mem').text(display + ' MB');
+
+            $('#nbresuse-cpu').text(data['cpu'])
+            $('#nbresuse-gpu').text(data['gpu'])
+            $('#nbresuse-broadcast').text(data['broadcast'])
         });
     }
 

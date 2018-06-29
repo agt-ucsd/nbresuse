@@ -1,11 +1,18 @@
 import os
 import json
 import psutil
+import time
 from traitlets import Float, Int, default
 from traitlets.config import Configurable
 from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
+import GPUtil
 
+# Py2 / Py3 throw different errors
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
 
 class MetricsHandler(IPythonHandler):
     def get(self):
@@ -13,9 +20,25 @@ class MetricsHandler(IPythonHandler):
         Calculate and return current resource usage metrics
         """
         config = self.settings['nbresuse_display_config']
-        cur_process = psutil.Process()
-        all_processes = [cur_process] + cur_process.children(recursive=True)
-        rss = sum([p.memory_info().rss for p in all_processes])
+        init_process = psutil.Process(1)
+        all_processes = [init_process] + init_process.children(recursive=True)
+
+        try:
+              rss = sum([p.memory_info().rss for p in all_processes])
+              cpu = sum([p.cpu_percent() for p in all_processes])
+              time.sleep(0.1)
+              cpu = sum([p.cpu_percent() for p in all_processes])
+        except psutil.NoSuchProcess:
+              pass
+
+        cpu_message=('%.2f%%' % cpu)
+
+        broadcast_message=''
+        try:
+             with open('/tmp/broadcast.message', 'r') as broadcast:
+                broadcast_message=broadcast.read()
+        except FileNotFoundError:
+             pass
 
         limits = {}
 
@@ -25,9 +48,21 @@ class MetricsHandler(IPythonHandler):
             }
             if config.mem_warning_threshold != 0:
                 limits['memory']['warn'] = (config.mem_limit - rss) < (config.mem_limit * config.mem_warning_threshold)
+
+        gpu_message=''
+        try:
+           for g in GPUtil.getGPUs():
+              gpu_message += ( 'GPU %d (%s): %.2f%% active ; %dMB/%dMB GRAM' % (g.id, g.name, g.load*100, g.memoryUsed, g.memoryTotal) )
+        except ValueError:
+           gpu_message = 'n/a'
+           pass
+
         metrics = {
             'rss': rss,
             'limits': limits,
+            'gpu': gpu_message,
+            'cpu': cpu_message,
+            'broadcast': broadcast_message
         }
         self.write(json.dumps(metrics))
 
