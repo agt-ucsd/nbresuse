@@ -1,4 +1,73 @@
 define(['jquery', 'base/js/utils'], function ($, utils) {
+
+
+    var podEviction = function() {
+        var evictionTime = null;
+        var showedModal = false;
+
+        var decrementEvictionTime = function() {
+            evictionTime--;
+        }
+
+        var setEvictionTime = function(evictionTimeSeconds) {
+            evictionTime = evictionTimeSeconds;
+        }
+
+        var countDown= function() {
+            $('.evictTime').text(evictionTime);
+            decrementEvictionTime();
+        }
+        
+        var appendCountdownElements = function() {
+            // add the modal and make it appear + give it toggability
+            var modal = '<div id="terminateModal" class="modal" role="dialog" style="display: none;">' +
+                            '<div class="modal-dialog">' +
+                                '<div class="modal-content">' +
+                                    '<div class="modal-header">' +
+                                        '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+                                        '<h4 class="modal-title">Pod Eviction Notification</h4>' +
+                                    '</div>' +
+                                    '<div class="modal-body">' +
+                                        '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data.</p>' +
+                                    '</div>' +
+                                    '<div class="modal-footer">' +
+                                        '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+            $('body').append(modal);
+            $('#terminateModal').modal('toggle');
+    
+            // add a countdown timer
+            var countdown = '<strong> Seconds until Eviction: </strong><span title="Seconds Til Eviction" class="evictTime"></span>'
+            $('#nbresuse-display').append(countdown);
+        }
+
+        return {
+            checkForEviction: function() {
+                if (document.hidden) {
+                    // Don't poll when nobody is looking
+                    return;
+                }
+
+                $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
+                    console.log('inside here');
+                    var terminationTime = data['termination'];
+        
+                    if (terminationTime > 0 && !showedModal) {
+                        showedModal = true;
+                        setEvictionTime(terminationTime);
+                        
+                        appendCountdownElements();
+
+                        setInterval(countDown, 1000);
+                    }
+                });
+            }
+        }
+    }
+
     function setupDOM() {
         $('#maintoolbar-container').append(
             $('<div>').attr('id', 'nbresuse-display')
@@ -55,48 +124,17 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
         });
     }
 
-    var appendModal = function() {
-        var modal = '<div id="terminateModal" class="modal" role="dialog" style="display: none;">' +
-                        '<div class="modal-dialog">' +
-                            '<div class="modal-content">' +
-                                '<div class="modal-header">' +
-                                    '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                                    '<h4 class="modal-title">Pod Eviction Notification</h4>' +
-                                '</div>' +
-                                '<div class="modal-body">' +
-                                    '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data.</p>' +
-                                '</div>' +
-                                '<div class="modal-footer">' +
-                                    '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-        $('body').append(modal);
-
-        var countdown = '<strong> Seconds until Eviction: </strong><span title="Seconds Til Eviction" class="evictTime"></span>'
-        $('#nbresuse-display').append(countdown);
-    }
 
     var load_ipython_extension = function () {
         var updateTime = 1000 * 5;
         setupDOM();
         displayMetrics();
-        appendModal();
-        evictionTime = 300;
-        $('#terminateModal').modal('toggle');
+
+        var podEvictor = podEviction();
 
         // Update every five seconds, eh?
         setInterval(displayMetrics, updateTime);
-        function decrementEviction() {
-            evictionTime--;
-        }
-        function setEvictTime() {
-            $('.evictTime').text(evictionTime);
-        }
-        setInterval(decrementEviction, 1000);
-        setInterval(setEvictTime, 1000);
-        // setInterval(podEvictor.checkForTermination(), updateTime)
+        setInterval(podEvictor.checkForEviction, updateTime);
 
         document.addEventListener("visibilitychange", function() {
             // Update instantly when user activates notebook tab
