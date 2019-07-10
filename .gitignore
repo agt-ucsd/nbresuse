@@ -24,3 +24,13 @@ var/
 .installed.cfg
 *.egg
 
+# Virtual environment
+bin/
+include/
+lib/
+pyvenv.cfg
+
+# test deployment scripts
+*.sh
+*.ipynb
+.ipynb_hceckpoints
