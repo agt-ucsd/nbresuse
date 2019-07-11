@@ -34,3 +34,5 @@ pyvenv.cfg
 *.sh
 *.ipynb
 .ipynb_hceckpoints
+share/
+etc/
