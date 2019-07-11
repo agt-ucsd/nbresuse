@@ -1,33 +1,10 @@
-define(['jquery', 'base/js/utils'], function ($, utils) {
-    var appendCountdownElements = function() {
-        // add the modal and make it appear + give it toggability
-        var modal = '<div id="terminateModal" class="modal" role="dialog" style="display: none;">' +
-                        '<div class="modal-dialog">' +
-                            '<div class="modal-content">' +
-                                '<div class="modal-header">' +
-                                    '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                                    '<h4 class="modal-title">Pod Eviction Notification</h4>' +
-                                '</div>' +
-                                '<div class="modal-body">' +
-                                    '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data.</p>' +
-                                '</div>' +
-                                '<div class="modal-footer">' +
-                                    '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-        $('body').append(modal);
-        $('#terminateModal').modal('toggle');
+define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
 
-        // add a countdown timer
-        var countdown = '<strong> Seconds until Eviction: </strong><span title="Seconds Til Eviction" class="evictTime"></span>'
-        $('#nbresuse-display').append(countdown);
-    }
 
     var podEviction = function() {
         var evictionTime = null;
         var showedModal = false;
+        var countdownEndSequence = false;
 
         var decrementEvictionTime = function() {
             evictionTime--;
@@ -37,39 +14,78 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             evictionTime = evictionTimeSeconds;
         }
 
-        var countDown= function() {
-            $('.evictTime').text(evictionTime);
+        var countDown = function() {
+            if (evictionTime > 30) {
+                $('.evictTime').text(evictionTime);
+
+                if (!showedModal) {
+                    $('#terminateModal').modal('toggle');
+                    showedModal = true;
+                }
+
+            } else if (countdownEndSequence) {
+                // do nothing
+                return
+            } 
+            else {
+                $('#terminateModal').modal('hide');
+                var skull = '<span id="blink">&#9760;</span>'
+                $('#skullface')
+                    .replaceWith(skull)
+                countdownEndSequence = true;
+            }
             decrementEvictionTime();
         }
+        
+        var appendCountdownElements = function() {
+            // add the modal
+            var modal = '<div id="terminateModal" class="modal" role="dialog" style="display: none;">' +
+                            '<div class="modal-dialog">' +
+                                '<div class="modal-content">' +
+                                    '<div class="modal-header">' +
+                                        '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+                                        '<h4 class="modal-title">Pod Eviction Notification</h4>' +
+                                    '</div>' +
+                                    '<div class="modal-body">' +
+                                        '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data.</p>' +
+                                    '</div>' +
+                                    '<div class="modal-footer">' +
+                                        '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+            $('body').append(modal);
 
-        console.log('called');
+            // add a countdown timer
+            var countdown = '<strong> Seconds Until Pod Eviction: </strong><span id="skullface" title="Seconds Til Eviction" class="evictTime"></span>'
+            $('#nbresuse-display').append(countdown);
+            
+            // add blinker style
+            var blinker = '<style>#blink { animation: blinker 1s linear infinite; } @keyframes blinker { 50% { opacity: 0; }}</style>'
+            $('head').append(blinker);
+        }
 
         return {
             checkForEviction: function() {
-                console.log('here');
                 if (document.hidden) {
                     // Don't poll when nobody is looking
                     return;
                 }
 
                 $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
-                    console.log('inside here');
                     var terminationTime = data['termination'];
         
                     if (terminationTime > 0 && !showedModal) {
-                        showedModal = true;
                         setEvictionTime(terminationTime);
                         
                         appendCountdownElements();
-
                         setInterval(countDown, 1000);
                     }
                 });
             }
         }
     }
-
-
 
     function setupDOM() {
         $('#maintoolbar-container').append(
@@ -106,6 +122,7 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
         $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
             // FIXME: Proper setups for MB and GB. MB should have 0 things
             // after the ., but GB should have 2.
+    
             var display = Math.round(data['rss'] / (1024 * 1024));
 
             var limits = data['limits'];
@@ -123,7 +140,11 @@ define(['jquery', 'base/js/utils'], function ($, utils) {
             }
             $('#nbresuse-mem').text(display + ' MB');
             
-            $('#nbresuse-gpu').text(data['gpu'] + ' GPU')
+            if (data['gpu'] === 'n/a') {
+                $('#nbresuse-gpu').text(data['gpu']);
+            } else {
+                $('$nbresuse-gpu').text(data['gpu'] + ' GPU');
+            }
         });
     }
 

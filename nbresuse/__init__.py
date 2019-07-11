@@ -1,4 +1,5 @@
 import os
+import os.path
 import json
 import psutil
 import GPUtil
@@ -39,10 +40,20 @@ def get_metrics(config):
     return metrics
 
 def is_pod_terminating():
-    is_terminating = os.path.exists('/tmp/test.txt')
-    # 5 minutes in seconds
-    time_to_termination = 300 if is_terminating else 0
-    return {'termination': time_to_termination}
+    try:
+        fp = os.path.join('/tmp', 'test.txt')
+        is_terminating = os.path.exists(fp)
+
+        time_to_termination = 0
+        if is_terminating:
+            with open(fp, 'r') as f:
+                time_to_termination = int(f.read())
+
+        return {'termination': time_to_termination}
+
+    except Exception as e:
+        print('IMPROPERLY FORMATTED TERMINATION FILE {}'.format(e))
+        return {'termination': 0}
 
 class MetricsHandler(IPythonHandler):
     @web.authenticated
@@ -56,7 +67,6 @@ class MetricsHandler(IPythonHandler):
         metrics.update(is_pod_terminating())
         self.write(json.dumps(metrics))
 
-
 def _jupyter_server_extension_paths():
     """
     Set up the server extension for collecting metrics
@@ -69,12 +79,14 @@ def _jupyter_nbextension_paths():
     """
     Set up the notebook extension for displaying metrics
     """
-    return [{
-        "section": "notebook",
-        "dest": "nbresuse",
-        "src": "static",
-        "require": "nbresuse/main"
-    }]
+    return [
+        {
+            "section": "notebook",
+            "dest": "nbresuse",
+            "src": "static",
+            "require": "nbresuse/main"
+        }
+    ]
 
 class ResourceUseDisplay(Configurable):
     """
@@ -115,4 +127,5 @@ def load_jupyter_server_extension(nbapp):
     resuseconfig = ResourceUseDisplay(parent=nbapp)
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
     route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
+    css_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/css')
     nbapp.web_app.add_handlers('.*', [(route_pattern, MetricsHandler)])
