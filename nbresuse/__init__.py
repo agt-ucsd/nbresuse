@@ -9,8 +9,7 @@ from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
 from tornado import web
 
-def get_metrics(config):
-    
+def get_mem(config):
     # related to memory usage
     cur_process = psutil.Process()
     all_processes = [cur_process] + cur_process.children(recursive=True)
@@ -24,24 +23,32 @@ def get_metrics(config):
         }
         if config.mem_warning_threshold != 0:
             limits['memory']['warn'] = (config.mem_limit - rss) < (config.mem_limit * config.mem_warning_threshold)
-    
-    # gpu usage
-    gpu_message = '50'
-    gpu_data = GPUtil.getGPUs()
-    if len(gpu_data) == 0:
-        gpu_message = 'n/a'
 
     metrics = {
         'rss': rss,
-        'limits': limits,
-        'gpu': gpu_message
+        'limits': limits
     }
 
     return metrics
 
+def get_gpu():
+    gpus = GPUtil.getGPUs()
+    
+    gpu_message = 'n/a'
+    if not len(gpus) == 0:
+        loads = []
+        for gpu in gpus:
+            loads.append(gpu.load)
+        
+        total_load = int(sum(loads))
+
+        gpu_message = '%s GPU' % (total_load)
+    
+    return {'gpu': gpu_message}
+
 def is_pod_terminating():
     try:
-        fp = os.path.join('/tmp', 'test.txt')
+        fp = os.path.join('/tmp', 'termination.txt')
         is_terminating = os.path.exists(fp)
 
         time_to_termination = 0
@@ -55,6 +62,21 @@ def is_pod_terminating():
         print('IMPROPERLY FORMATTED TERMINATION FILE {}'.format(e))
         return {'termination': 0}
 
+def get_metrics(config):
+    try:
+        mem_usage = get_mem(config)
+        gpu_usage = get_gpu()
+        termination = is_pod_terminating()
+
+        metrics = dict()
+        metrics.update(mem_usage)
+        metrics.update(gpu_usage)
+        metrics.update(termination)
+
+        return metrics
+    except Exception as e:
+        print(type(e))
+
 class MetricsHandler(IPythonHandler):
     @web.authenticated
     def get(self):
@@ -64,7 +86,6 @@ class MetricsHandler(IPythonHandler):
         config = self.settings['nbresuse_display_config']
         
         metrics = get_metrics(config)
-        metrics.update(is_pod_terminating())
         self.write(json.dumps(metrics))
 
 def _jupyter_server_extension_paths():
