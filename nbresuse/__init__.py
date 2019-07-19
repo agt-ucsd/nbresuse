@@ -1,6 +1,7 @@
 import os
 import os.path
 import json
+import signal
 import psutil
 import GPUtil
 from traitlets import Float, Int, default
@@ -8,6 +9,9 @@ from traitlets.config import Configurable
 from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
 from tornado import web
+
+def sigterm_handler(signal, frame):
+    print('at sigterm handler, will hopefully do nothing')
 
 def get_mem(config):
     # related to memory usage
@@ -145,6 +149,7 @@ def load_jupyter_server_extension(nbapp):
     """
     Called during notebook start
     """
+    signal.signal(signal.SIGTERM, sigterm_handler)
     resuseconfig = ResourceUseDisplay(parent=nbapp)
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
     route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
