@@ -58,7 +58,7 @@ def get_gpu():
         
         return {'gpu': gpu_message}
     except Exception as e:
-        return {'gpu': e}
+        return {'gpu': str(e)}
 
 def is_pod_terminating():
     try:
