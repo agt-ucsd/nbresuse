@@ -10,45 +10,55 @@ from notebook.utils import url_path_join
 from notebook.base.handlers import IPythonHandler
 from tornado import web
 
+
 def sigterm_handler(signal, frame):
     print('at sigterm handler, will hopefully do nothing')
 
 def get_mem(config):
-    # related to memory usage
-    cur_process = psutil.Process()
-    all_processes = [cur_process] + cur_process.children(recursive=True)
-    rss = sum([p.memory_info().rss for p in all_processes])
+    try:
+        # related to memory usage
+        cur_process = psutil.Process()
+        all_processes = [cur_process] + cur_process.children(recursive=True)
+        rss = sum([p.memory_info().rss for p in all_processes])
 
-    limits = {}
+        limits = {}
 
-    if config.mem_limit != 0:
-        limits['memory'] = {
-            'rss': config.mem_limit
+        if config.mem_limit != 0:
+            limits['memory'] = {
+                'rss': config.mem_limit
+            }
+            if config.mem_warning_threshold != 0:
+                limits['memory']['warn'] = (config.mem_limit - rss) < (config.mem_limit * config.mem_warning_threshold)
+
+        metrics = {
+            'rss': rss,
+            'limits': limits
         }
-        if config.mem_warning_threshold != 0:
-            limits['memory']['warn'] = (config.mem_limit - rss) < (config.mem_limit * config.mem_warning_threshold)
 
-    metrics = {
-        'rss': rss,
-        'limits': limits
-    }
-
-    return metrics
+        return metrics
+    except Exception as e:
+        metrics = {
+            'rss': None,
+            'limits': None
+        }
 
 def get_gpu():
-    gpus = GPUtil.getGPUs()
-    
-    gpu_message = 'n/a'
-    if not len(gpus) == 0:
-        loads = []
-        for gpu in gpus:
-            loads.append(gpu.load)
+    try:
+        gpus = GPUtil.getGPUs()
         
-        total_load = int(sum(loads))
+        gpu_message = 'n/a'
+        if not len(gpus) == 0:
+            loads = []
+            for gpu in gpus:
+                loads.append(gpu.load)
+            
+            total_load = int(sum(loads))
 
-        gpu_message = '%s GPU' % (total_load)
-    
-    return {'gpu': gpu_message}
+            gpu_message = '%s GPU' % (total_load)
+        
+        return {'gpu': gpu_message}
+    except Exception as e:
+        return {'gpu': '1001 GPUs'}
 
 def is_pod_terminating():
     try:
@@ -63,7 +73,6 @@ def is_pod_terminating():
         return {'termination': time_to_termination}
 
     except Exception as e:
-        print('IMPROPERLY FORMATTED TERMINATION FILE {}'.format(e))
         return {'termination': 0}
 
 def get_metrics(config):
@@ -76,10 +85,15 @@ def get_metrics(config):
         metrics.update(mem_usage)
         metrics.update(gpu_usage)
         metrics.update(termination)
-        print('METRICS ARE ', metrics, '\n\n')
+
         return metrics
     except Exception as e:
-        print(type(e))
+        return {
+            'rss': None,
+            'limits': None,
+            'gpu': 'uncaught',
+            'termination': 0
+        }
 
 class MetricsHandler(IPythonHandler):
     @web.authenticated

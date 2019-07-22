@@ -171,3 +171,18 @@
 [NotebookApp | CRITICAL] Shutdown confirmed
 [NotebookApp | INFO] Shutting down 1 kernel
 [NotebookApp | INFO] Kernel shutdown: f6529174-2b09-4297-ad80-de6e2ffaf0db
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=38a29bbab935293fa8bb7dffbe3771ebdb8b873f3e1ca4bd
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-21349-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=38a29bbab935293fa8bb7dffbe3771ebdb8b873f3e1ca4bd
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 0 kernels
