@@ -153,6 +153,5 @@ def load_jupyter_server_extension(nbapp):
     resuseconfig = ResourceUseDisplay(parent=nbapp)
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
     route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
-    css_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/css')
     print('EXTENSION IS ', nbapp.web_app.settings['base_url'])
     nbapp.web_app.add_handlers('.*', [(route_pattern, MetricsHandler)])
