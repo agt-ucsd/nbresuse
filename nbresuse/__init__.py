@@ -76,7 +76,7 @@ def get_metrics(config):
         metrics.update(mem_usage)
         metrics.update(gpu_usage)
         metrics.update(termination)
-
+        print('METRICS ARE ', metrics, '\n\n')
         return metrics
     except Exception as e:
         print(type(e))
@@ -154,4 +154,5 @@ def load_jupyter_server_extension(nbapp):
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
     route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
     css_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/css')
+    print('EXTENSION IS ', nbapp.web_app.settings['base_url'])
     nbapp.web_app.add_handlers('.*', [(route_pattern, MetricsHandler)])

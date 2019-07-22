@@ -152,3 +152,22 @@
 [NotebookApp | INFO] Shutting down 2 kernels
 [NotebookApp | INFO] Kernel shutdown: d6fdc739-0a04-4fb2-926d-cb1aaf8bf246
 [NotebookApp | INFO] Kernel shutdown: 3794cc53-db61-4cd5-add9-b72f1d74894c
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=6b61ce2854e08e05c7d2c6f6a9141db73e9baf29822b409a
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-16902-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=6b61ce2854e08e05c7d2c6f6a9141db73e9baf29822b409a
+[NotebookApp | INFO] Kernel started: f6529174-2b09-4297-ad80-de6e2ffaf0db
+[NotebookApp | INFO] Adapting to protocol v5.1 for kernel f6529174-2b09-4297-ad80-de6e2ffaf0db
+[NotebookApp | INFO] Starting buffering for f6529174-2b09-4297-ad80-de6e2ffaf0db:7eaff431c0f446d7a331b34e7322545e
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 1 kernel
+[NotebookApp | INFO] Kernel shutdown: f6529174-2b09-4297-ad80-de6e2ffaf0db
