@@ -12,7 +12,7 @@ from tornado import web
 
 
 def sigterm_handler(signal, frame):
-    print('at sigterm handler, will hopefully do nothing')
+    pass
 
 def get_mem(config):
     try:
@@ -46,7 +46,6 @@ def get_gpu():
     try:
         gpus = GPUtil.getGPUs()
         
-        gpu_message = 'n/a'
         if not len(gpus) == 0:
             loads = []
             for gpu in gpus:
@@ -58,7 +57,7 @@ def get_gpu():
         
         return {'gpu': gpu_message}
     except Exception as e:
-        return {'gpu': str(e)}
+        return {'gpu': 'n/a'}
 
 def is_pod_terminating():
     try:
@@ -167,5 +166,4 @@ def load_jupyter_server_extension(nbapp):
     resuseconfig = ResourceUseDisplay(parent=nbapp)
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
     route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
-    print('EXTENSION IS ', nbapp.web_app.settings['base_url'])
     nbapp.web_app.add_handlers('.*', [(route_pattern, MetricsHandler)])

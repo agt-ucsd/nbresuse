@@ -122,8 +122,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
             // FIXME: Proper setups for MB and GB. MB should have 0 things
             // after the ., but GB should have 2.
-            
-            console.log('url is ', utils.get_body_data('baseUrl') + 'metrics')
+
             var display = Math.round(data['rss'] / (1024 * 1024));
 
             var limits = data['limits'];
