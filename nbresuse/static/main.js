@@ -1,7 +1,22 @@
 define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
 
+    function setupDOM() {
+        // FIXME: Do something cleaner to get styles in here?
+        $('#maintoolbar-container').append(
+            $('<div>').attr('id', 'nbresuse-display')
+                        .addClass('btn-group')
+                        .addClass('pull-right')
+        )
+    
+        $('head').append(
+            $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
+        );
+        $('head').append(
+            $('<style>').html('#nbresuse-display { padding: 2px 8px; }')
+        );
+    }
 
-    var podEviction = function() {
+    var PodEvictor = function() {
         var evictionTime = null;
         var showedModal = false;
         var countdownEndSequence = false;
@@ -44,7 +59,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                                 '<div class="modal-content">' +
                                     '<div class="modal-header">' +
                                         '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                                        '<h4 class="modal-title">Out of Capacity Notification</h4>' +
+                                        '<h4 class="modal-title">Out of Capacity and Pod Eviction Notification</h4>' +
                                     '</div>' +
                                     '<div class="modal-body">' +
                                         '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data. <br><br>' +
@@ -88,42 +103,57 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
     }
 
-    function setupDOM() {
-        $('#maintoolbar-container').append(
-            $('<div>').attr('id', 'nbresuse-display')
-                      .addClass('btn-group')
-                      .addClass('pull-right')
-            .append(
-                $('<strong>').text('Memory: ')
-            ).append(
-                $('<span>').attr('id', 'nbresuse-mem')
-                           .attr('title', 'Actively used Memory (updates every 5s)')
-            )
-            .append(
+    var GPUDisplay = function() {
+        var showedDisplay = false;
+
+        var setup = function() {
+            $('#nbresuse-display').append(
                 $('<strong>').text(' GPU: ')
             ).append(
                 $('<span>').attr('id', 'nbresuse-gpu')
                            .attr('title', 'Actively used gpu (updates every 5s)')
-            )
-        );
-        // FIXME: Do something cleaner to get styles in here?
-        $('head').append(
-            $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
-        );
-        $('head').append(
-            $('<style>').html('#nbresuse-display { padding: 2px 8px; }')
-        );
+            );
+
+            showedDisplay = true;
+        }
+
+        var update = function(data) {
+            var gpuData = data['gpu'];
+
+            if (gpuData !== 'n/a') {
+                if (!showedDisplay) {
+                    setup();
+                }
+                $('#nbresuse-gpu').text(gpuData);
+            }
+        }
+
+        return {
+            update: update
+        }
     }
 
-    var displayMetrics = function() {
-        if (document.hidden) {
-            // Don't poll when nobody is looking
-            return;
+    var MemoryDisplay = function() {
+        var showedDisplay = false;
+
+        var setup = function() {
+            $('#nbresuse-display').append(
+                    $('<strong>').text('Memory: ')
+                ).append(
+                    $('<span>').attr('id', 'nbresuse-mem')
+                                .attr('title', 'Actively used Memory (updates every 5s)')
+                )
+            
+                showedDisplay = true;
         }
-        $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
+
+        var update = function(data) {
             // FIXME: Proper setups for MB and GB. MB should have 0 things
             // after the ., but GB should have 2.
-
+            if (!showedDisplay) {
+                setup();
+            }
+    
             var display = Math.round(data['rss'] / (1024 * 1024));
 
             var limits = data['limits'];
@@ -140,34 +170,69 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             if (data['limits']['memory'] !== null) {
             }
             $('#nbresuse-mem').text(display + ' MB');
-            
-            if (data['gpu'] === 'n/a') {
-                $('#nbresuse-gpu').text(data['gpu']);
-            } else {
-                $('$nbresuse-gpu').text(data['gpu'] + ' GPU');
-            }
-        });
+        }
+
+        return {
+            update: update
+        }
     }
 
+    var MetricsHandler = function() {
+        var listeners = [];
+
+        /**
+         * listener must have an update method
+         */
+        var registerListener = function(listener) {
+            listeners.push(listener)
+        }
+
+        var pollMetrics = function() {
+            if (document.hidden) {
+                // return if no one is watching
+                return;
+            }
+            $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
+                for (var i = 0; i < listeners.length; i++) {
+                    listeners[i].update(data)
+                }
+            });
+        }
+
+        return {
+            pollMetrics: pollMetrics,
+            registerListener: registerListener
+        }
+    }
 
     var load_ipython_extension = function () {
-        var updateTime = 1000 * 5;
         setupDOM();
-        displayMetrics();
 
-        var podEvictor = podEviction();
+        // setup objects
+        var podEvictor = PodEvictor();
+        var metricsHandler = MetricsHandler();
+        var memoryDisplay = MemoryDisplay();
+        var gpuDisplay = GPUDisplay();
 
-        // Update every five seconds, eh?
-        setInterval(displayMetrics, updateTime);
+        metricsHandler.registerListener(memoryDisplay);
+        metricsHandler.registerListener(gpuDisplay);
+
+        // start polling processes once immediately
+        metricsHandler.pollMetrics();
+    
+        // start polling processes
+        var updateTime = 1000 * 5;
+        setInterval(metricsHandler.pollMetrics, updateTime);
         setInterval(podEvictor.checkForEviction, updateTime);
 
         document.addEventListener("visibilitychange", function() {
             // Update instantly when user activates notebook tab
             // FIXME: Turn off update timer completely when tab not in focus
             if (!document.hidden) {
-                displayMetrics();
+                metricsHandler.pollMetrics();
             }
         }, false);
+    
     };
 
     return {
