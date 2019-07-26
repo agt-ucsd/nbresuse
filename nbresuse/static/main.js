@@ -59,11 +59,11 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                                 '<div class="modal-content">' +
                                     '<div class="modal-header">' +
                                         '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
-                                        '<h4 class="modal-title">Out of Capacity and Pod Eviction Notification</h4>' +
+                                        '<h4 class="modal-title">Out of Capacity Notification - Pod Eviction</h4>' +
                                     '</div>' +
                                     '<div class="modal-body">' +
                                         '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data. <br><br>' +
-                                        'Please see the <a href="https://ucsdservicedesk.service-now.com/its?id=kb_article&sys_id=60339445db19f7c49736f35aaf961935#docs-internal-guid-ac5f8859-7fff-a024-499b-79006b03c47c">FAQs</a> for more details.</p>' +
+                                        'Please see the <a href="https://ucsdservicedesk.service-now.com/its?id=kb_article_view&sysparm_article=KB0030470">FAQs</a> for more details.</p>' +
                                     '</div>' +
                                     '<div class="modal-footer">' +
                                         '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
