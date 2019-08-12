@@ -36,6 +36,7 @@ def get_mem(config):
         }
 
         return metrics
+
     except Exception as e:
         metrics = {
             'rss': None,

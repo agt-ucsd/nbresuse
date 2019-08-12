@@ -63,7 +63,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                                     '</div>' +
                                     '<div class="modal-body">' +
                                         '<p class="alert alert-warning"><strong>Warning!</strong> Your pod will evict itself in <span class="evictTime"></span> seconds! Please save and shutdown everything or else risk losing data. <br><br>' +
-                                        'Please see the <a href="https://ucsdservicedesk.service-now.com/its?id=kb_article_view&sysparm_article=KB0030470">FAQs</a> for more details.</p>' +
+                                        'Please see the <a href="https://ucsdservicedesk.service-now.com/its?id=kb_article_view&sysparm_article=KB0030470">FAQ</a> for more details.</p>' +
                                     '</div>' +
                                     '<div class="modal-footer">' +
                                         '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
