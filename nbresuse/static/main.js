@@ -179,7 +179,11 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
 
     var MetricsHandler = function() {
         var listeners = [];
+        var is404 = false;
+        var url = utils.get_body_data('baseUrl') + 'metrics';
 
+        // used for detecting redirects
+        var xhr = new XMLHttpRequest
         /**
          * listener must have an update method
          */
@@ -187,16 +191,58 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             listeners.push(listener)
         }
 
+        var stop = function() {
+            is404 = true;
+            $('#nbresuse-display').remove()
+            $('#nbresuse-warn').remove()
+        }
+
         var pollMetrics = function() {
             if (document.hidden) {
                 // return if no one is watching
                 return;
             }
-            $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
-                for (var i = 0; i < listeners.length; i++) {
-                    listeners[i].update(data)
+            if (is404) {
+                // stop polling if there's a 404 from metrics
+                return;
+            }
+
+            $.ajax({
+                type: 'get',
+                dataType: 'json',
+                url: url,
+                xhr: function() {
+                    return xhr
                 }
+            }).done(function(data) {
+                try {
+                    // check for redirect
+                    if (!xhr.responseURL.endsWith(url)) {
+                        throw new Error('redirect');
+                    } 
+                    // send updated data to listeners
+                    for (var i = 0; i < listeners.length; i++) {
+                        listeners[i].update(data)
+                    }
+                } catch (error) {
+                    stop();
+                }
+            }).fail(function() {
+                stop();
             });
+            
+            // $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
+            //     try {
+            //         for (var i = 0; i < listeners.length; i++) {
+            //             listeners[i].update(data)
+            //         }
+            //     } catch (error) {
+            //         stop();
+            //     }
+
+            // }).fail(function() {
+            //     is404 = true;
+            // });
         }
 
         return {

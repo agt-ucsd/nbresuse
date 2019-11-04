@@ -50,3 +50,9 @@ can set the parameter `--ResourceUseDisplay.mem_warning_threshold=0.1`.
 
 Currently it only displays Memory usage (just RSS). Other metrics will be
 added in the future as needed.
+
+## TODO
+
+1. decouple pod eviction from metrics
+2. stop polling if 404
+3. default to not poll, add toggable memory collection
