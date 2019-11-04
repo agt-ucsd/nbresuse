@@ -75,19 +75,44 @@ def is_pod_terminating():
     except Exception as e:
         return {'termination': 0}
 
+def get_cpus():
+    try:
+        cpus = psutil.cpu_count()
+        return {'cpu_count': cpus}
+    except Exception as e:
+        return {}
+
+def get_cpu_percent():
+    try:
+        current_process = psutil.Process()
+        all_processes = [current_process] + current_process.children(recursive=True)
+        cpu_percent_usage = list(map(lambda p: p.cpu_percent(interval=0.05), all_processes))
+
+        return {'cpu_percent_usage': sum(cpu_percent_usage)}
+
+    except Exception as e:
+        return {}
+
 def get_metrics(config):
     try:
         mem_usage = get_mem(config)
         gpu_usage = get_gpu()
         termination = is_pod_terminating()
+        cpu_percent = get_cpu_percent()
+        cpu_count = get_cpus()
 
         metrics = dict()
         metrics.update(mem_usage)
         metrics.update(gpu_usage)
         metrics.update(termination)
+        metrics.update(cpu_percent)
+        metrics.update(cpu_count)
 
         return metrics
+
     except Exception as e:
+        # fix this, throw an error. The ipython handler should
+        # do something else
         return {
             'rss': None,
             'limits': None,

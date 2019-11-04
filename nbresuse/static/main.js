@@ -12,8 +12,12 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             $('<style>').html('.nbresuse-warn { background-color: #FFD2D2; color: #D8000C; }')
         );
         $('head').append(
-            $('<style>').html('#nbresuse-display { padding: 2px 8px; }')
+            $('<style>').html('#nbresuse-display { padding: 2px 8px; }'),
         );
+        $('head').append(
+            $('<style>').html('#nbresuse-display > span { padding-right: 5px; }')
+        );
+        
     }
 
     var PodEvictionDisplay = function() {
@@ -179,6 +183,26 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
     }
 
+    var CpuDisplay = function() {
+        var appendDisplay = function() {
+            $('#nbresuse-display').append(
+                $('<strong>').text('CPU: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-percent-cpu')
+                            .attr('title', 'Actively used Memory (updates every 5s)')
+            );
+        }
+
+        var update = function(data) {
+            $('#nbresuse-percent-cpu').text(data['cpu_percent_usage'] + '%');
+        }
+
+        return {
+            appendDisplay: appendDisplay,
+            update: update
+        }
+    }
+
     var MetricsHandler = function() {
         var listeners = [];
         var is404 = false;
@@ -278,12 +302,14 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         setupDOM();
         var collectMetrics = false;
         var memoryDisplay = MemoryDisplay();
+        var cpuDisplay = CpuDisplay();
         var gpuDisplay = GPUDisplay();
         var podEvictorDisplay = PodEvictionDisplay();
 
         var metricsHandler = MetricsHandler();
         metricsHandler.setUpdateTime(5);
         metricsHandler.registerListener(memoryDisplay);
+        metricsHandler.registerListener(cpuDisplay);
         metricsHandler.registerListener(gpuDisplay);
         metricsHandler.registerListener(podEvictorDisplay);
 
