@@ -16,42 +16,17 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         );
     }
 
-    var PodEvictor = function() {
-        var evictionTime = null;
+    var PodEvictionDisplay = function() {
         var showedModal = false;
+        var evictionTime;
         var countdownEndSequence = false;
+        var evictionInterval;
 
-        var decrementEvictionTime = function() {
-            evictionTime--;
+        var appendDisplay = function() {
+            // there's no need for this unless eviction is occurring
+            return;
         }
 
-        var setEvictionTime = function(evictionTimeSeconds) {
-            evictionTime = evictionTimeSeconds;
-        }
-
-        var countDown = function() {
-            if (evictionTime > 30) {
-                $('.evictTime').text(evictionTime);
-
-                if (!showedModal) {
-                    $('#terminateModal').modal('toggle');
-                    showedModal = true;
-                }
-
-            } else if (countdownEndSequence) {
-                // do nothing
-                return
-            } 
-            else {
-                $('#terminateModal').modal('hide');
-                var skull = '<span id="blink">&#9760;</span>'
-                $('#skullface')
-                    .replaceWith(skull)
-                countdownEndSequence = true;
-            }
-            decrementEvictionTime();
-        }
-        
         var appendCountdownElements = function() {
             // add the modal
             var modal = '<div id="terminateModal" class="modal" role="dialog" style="display: none;">' +
@@ -81,32 +56,65 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             var blinker = '<style>#blink { animation: blinker 1s linear infinite; } @keyframes blinker { 50% { opacity: 0; }}</style>'
             $('head').append(blinker);
         }
+        
+        var countDown = function() {
+            if (evictionTime > 30) {
+                $('.evictTime').text(evictionTime);
 
-        return {
-            checkForEviction: function() {
-                if (document.hidden) {
-                    // Don't poll when nobody is looking
-                    return;
+                if (!showedModal) {
+                    $('#terminateModal').modal('toggle');
+                    showedModal = true;
                 }
 
-                $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
-                    var terminationTime = data['termination'];
-        
-                    if (terminationTime > 0 && !showedModal) {
-                        setEvictionTime(terminationTime);
-                        
-                        appendCountdownElements();
-                        setInterval(countDown, 1000);
-                    }
-                });
+            } else if (countdownEndSequence) {
+                // do nothing
+                return
+            } 
+            else {
+                $('#terminateModal').modal('hide');
+                var skull = '<span id="blink">&#9760;</span>'
+                $('#skullface')
+                    .replaceWith(skull)
+                
+                clearInterval(evictionInterval);
+                countdownEndSequence = true;
             }
+        }
+
+        var setEvictionTime = function(terminationTime) {
+            evictionTime = terminationTime;
+
+            evictionInterval = setInterval(function() {
+                evictionTime--;
+                countDown();
+            }, 1000);
+        }
+
+        var update = function(data) {
+            var terminationTime = data['termination'];
+
+            if (terminationTime > 0 && !showedModal) {
+                setEvictionTime(terminationTime);
+                appendCountdownElements();
+                countDown();
+            }
+        }
+
+        return {
+            update: update,
+            appendDisplay: appendDisplay
         }
     }
 
     var GPUDisplay = function() {
         var showedDisplay = false;
 
-        var setup = function() {
+        var appendDisplay = function() {
+            // do nothing, some users may not have a gpu, in which case they
+            // don't need to have an empty display
+            return;
+        }
+        var showDisplay = function() {
             $('#nbresuse-display').append(
                 $('<strong>').text(' GPU: ')
             ).append(
@@ -122,38 +130,31 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
 
             if (gpuData !== 'n/a') {
                 if (!showedDisplay) {
-                    setup();
+                    showDisplay();
                 }
                 $('#nbresuse-gpu').text(gpuData);
             }
         }
 
         return {
-            update: update
+            update: update,
+            appendDisplay: appendDisplay
         }
     }
 
     var MemoryDisplay = function() {
-        var showedDisplay = false;
-
-        var setup = function() {
+        var appendDisplay = function() {
             $('#nbresuse-display').append(
-                    $('<strong>').text('Memory: ')
-                ).append(
-                    $('<span>').attr('id', 'nbresuse-mem')
-                                .attr('title', 'Actively used Memory (updates every 5s)')
-                )
-            
-                showedDisplay = true;
+                $('<strong>').text('Memory: ')
+            ).append(
+                $('<span>').attr('id', 'nbresuse-mem')
+                            .attr('title', 'Actively used Memory (updates every 5s)')
+            );
         }
 
         var update = function(data) {
             // FIXME: Proper setups for MB and GB. MB should have 0 things
-            // after the ., but GB should have 2.
-            if (!showedDisplay) {
-                setup();
-            }
-    
+            // after the ., but GB should have 2.    
             var display = Math.round(data['rss'] / (1024 * 1024));
 
             var limits = data['limits'];
@@ -173,7 +174,8 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
 
         return {
-            update: update
+            update: update,
+            appendDisplay: appendDisplay
         }
     }
 
@@ -181,25 +183,51 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         var listeners = [];
         var is404 = false;
         var url = utils.get_body_data('baseUrl') + 'metrics';
+        var pollInterval;
+        var updateTime;
 
         // used for detecting redirects
         var xhr = new XMLHttpRequest
+        
+        var setup = function() {
+            appendButton();
+        }
+
+        var appendButton = function() {
+            $('#maintoolbar-container').append(
+                $('<div class="btn-group"><button class="btn btn-default" id="collect_metrics">Show Usage</button></div>')
+            );
+        }
+
+        var setUpdateTime = function(updateTimeSec) {
+            updateTime = updateTimeSec * 1000;
+        }
+
         /**
-         * listener must have an update method
+         * listener must have an update and appendDisplay method
          */
         var registerListener = function(listener) {
             listeners.push(listener)
         }
 
-        var stop = function() {
-            is404 = true;
-            $('#nbresuse-display').remove()
-            $('#nbresuse-warn').remove()
+        var stopPoll = function() {
+            $('#nbresuse-display').empty()
+            // destroy the pollInterval
+            clearInterval(pollInterval)
         }
 
-        var pollMetrics = function() {
+        var startPoll = function() {
+            listeners.forEach(listener => listener.appendDisplay());
+            
+            // get the polling started
+            poll();
+            pollInterval = setInterval(poll, updateTime);
+        }
+
+        var poll = function() {
             if (document.hidden) {
                 // return if no one is watching
+                console.log('polling stopped');
                 return;
             }
             if (is404) {
@@ -216,7 +244,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                 }
             }).done(function(data) {
                 try {
-                    // check for redirect
+                    // stop if redirected
                     if (!xhr.responseURL.endsWith(url)) {
                         throw new Error('redirect');
                     } 
@@ -225,59 +253,44 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                         listeners[i].update(data)
                     }
                 } catch (error) {
-                    stop();
+                    // something wrong with page, 
+                    is404 = true;
+                    stopPoll();
                 }
             }).fail(function() {
-                stop();
+                // something wrong with link
+                is404 = true;
+                stopPoll();
             });
-            
-            // $.getJSON(utils.get_body_data('baseUrl') + 'metrics', function(data) {
-            //     try {
-            //         for (var i = 0; i < listeners.length; i++) {
-            //             listeners[i].update(data)
-            //         }
-            //     } catch (error) {
-            //         stop();
-            //     }
-
-            // }).fail(function() {
-            //     is404 = true;
-            // });
         }
 
+        setup();
+
         return {
-            pollMetrics: pollMetrics,
-            registerListener: registerListener
+            registerListener: registerListener,
+            setUpdateTime: setUpdateTime,
+            startPoll: startPoll,
+            stopPoll: stopPoll
         }
     }
 
     var load_ipython_extension = function () {
         setupDOM();
-
-        // setup objects
-        var podEvictor = PodEvictor();
-        var metricsHandler = MetricsHandler();
+        var collectMetrics = false;
         var memoryDisplay = MemoryDisplay();
         var gpuDisplay = GPUDisplay();
+        var podEvictorDisplay = PodEvictionDisplay();
 
+        var metricsHandler = MetricsHandler();
+        metricsHandler.setUpdateTime(5);
         metricsHandler.registerListener(memoryDisplay);
         metricsHandler.registerListener(gpuDisplay);
+        metricsHandler.registerListener(podEvictorDisplay);
 
-        // start polling processes once immediately
-        metricsHandler.pollMetrics();
-    
-        // start polling processes
-        var updateTime = 1000 * 5;
-        setInterval(metricsHandler.pollMetrics, updateTime);
-        setInterval(podEvictor.checkForEviction, updateTime);
-
-        document.addEventListener("visibilitychange", function() {
-            // Update instantly when user activates notebook tab
-            // FIXME: Turn off update timer completely when tab not in focus
-            if (!document.hidden) {
-                metricsHandler.pollMetrics();
-            }
-        }, false);
+        $('#collect_metrics').click(function() {
+            collectMetrics = !collectMetrics;
+            collectMetrics ? metricsHandler.startPoll() : metricsHandler.stopPoll();
+        });
     
     };
 
