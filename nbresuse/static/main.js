@@ -119,26 +119,21 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
         
         var countDown = function() {
+            if (!showedModal) {
+                $('#terminateModal').modal('toggle');
+                showedModal = true;
+            }
+
             if (evictionTime > 30) {
                 $('.evictTime').text(evictionTime);
 
-                if (!showedModal) {
-                    $('#terminateModal').modal('toggle');
-                    showedModal = true;
-                }
-
-            } else if (countdownEndSequence) {
-                // do nothing
-                return
-            } 
-            else {
+            } else {
                 $('#terminateModal').modal('hide');
                 var skull = '<span id="blink">&#9760;</span>'
                 $('#skullface')
                     .replaceWith(skull)
                 
                 clearInterval(evictionInterval);
-                countdownEndSequence = true;
             }
         }
 
@@ -154,6 +149,9 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         var update = function(data) {
             var terminationTime = data['termination'];
 
+            // this will only run once, the showedModal
+            // prop will flip from the first run of the
+            // countDown() method
             if (terminationTime > 0 && !showedModal) {
                 setEvictionTime(terminationTime);
                 appendCountdownElements();
