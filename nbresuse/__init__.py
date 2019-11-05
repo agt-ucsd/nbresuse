@@ -111,7 +111,7 @@ def get_metrics(config):
         return metrics
 
     except Exception as e:
-        # fix this, throw an error. The ipython handler should
+        # FIXME this should throw an error. The ipython handler should
         # do something else
         return {
             'rss': None,
@@ -191,5 +191,5 @@ def load_jupyter_server_extension(nbapp):
     signal.signal(signal.SIGTERM, sigterm_handler)
     resuseconfig = ResourceUseDisplay(parent=nbapp)
     nbapp.web_app.settings['nbresuse_display_config'] = resuseconfig
-    route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/metrics')
+    route_pattern = url_path_join(nbapp.web_app.settings['base_url'], '/nbresuse/metrics')
     nbapp.web_app.add_handlers('.*', [(route_pattern, MetricsHandler)])

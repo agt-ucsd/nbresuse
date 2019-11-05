@@ -186,3 +186,82 @@
 [NotebookApp | INFO] interrupted
 [NotebookApp | CRITICAL] Shutdown confirmed
 [NotebookApp | INFO] Shutting down 0 kernels
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=c57fa1c46e5184b175b2522f55872e06a7197734f8571058
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-54273-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=c57fa1c46e5184b175b2522f55872e06a7197734f8571058
+[NotebookApp | INFO] Kernel started: 0208349d-a854-4b2f-aa78-c035b6faac10
+[NotebookApp | INFO] Adapting to protocol v5.1 for kernel 0208349d-a854-4b2f-aa78-c035b6faac10
+[NotebookApp | WARNING] 404 GET /static/components/preact/preact.min.js.map (::1) 9.35ms referer=None
+[NotebookApp | WARNING] 404 GET /static/components/proptypes/index.js.map (::1) 1.51ms referer=None
+[NotebookApp | WARNING] 404 GET /static/components/preact-compat/preact-compat.min.js.map (::1) 2.02ms referer=None
+[NotebookApp | INFO] Saving file at /Untitled.ipynb
+[NotebookApp | WARNING] No nbgrader_config.py file found. Rerun with DEBUG log level to see where nbgrader is looking.
+[NotebookApp | INFO] Validating '/Users/wuykimpang/Code/nbresuse/Untitled.ipynb'
+[NotebookApp | INFO] Executing notebook with kernel: python3
+[NotebookApp | ERROR] Timeout waiting for execute reply (30s).
+[NotebookApp | ERROR] Interrupting kernel
+[NotebookApp | INFO] Starting buffering for 0208349d-a854-4b2f-aa78-c035b6faac10:638923d0fc814e15a80ac83b9b6ae5f0
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 1 kernel
+[NotebookApp | INFO] Kernel shutdown: 0208349d-a854-4b2f-aa78-c035b6faac10
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=8dedb95a8a386edbaa4289c904deed8e50b608280a57f055
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-54372-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=8dedb95a8a386edbaa4289c904deed8e50b608280a57f055
+[NotebookApp | INFO] Kernel started: a9ab908b-5beb-4fed-9468-b2848c6a6d41
+[NotebookApp | INFO] Adapting to protocol v5.1 for kernel a9ab908b-5beb-4fed-9468-b2848c6a6d41
+[NotebookApp | INFO] Starting buffering for a9ab908b-5beb-4fed-9468-b2848c6a6d41:45ad01cffd0b4a65a90629e9fc60c699
+[NotebookApp | WARNING] 404 GET /tree/metrics (::1) 7.96ms referer=None
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 1 kernel
+[NotebookApp | INFO] Kernel shutdown: a9ab908b-5beb-4fed-9468-b2848c6a6d41
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=4fa2a02084cc10ec8e78cd87f85e44ce688aade881861e5b
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-54436-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=4fa2a02084cc10ec8e78cd87f85e44ce688aade881861e5b
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 0 kernels
+[NotebookApp | WARNING] No nbgrader_config.py file found (rerun with --debug to see where nbgrader is looking)
+[NotebookApp | INFO] Loading the validate_assignment nbgrader serverextension
+[NotebookApp | INFO] Serving notebooks from local directory: /Users/wuykimpang/Code/nbresuse
+[NotebookApp | INFO] The Jupyter Notebook is running at:
+[NotebookApp | INFO] http://localhost:8888/?token=15cac8971b6a0b2125e05adec9c42e123ed2b04a3ff21a54
+[NotebookApp | INFO] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[NotebookApp | CRITICAL] 
+    
+    To access the notebook, open this file in a browser:
+        file:///Users/wuykimpang/Library/Jupyter/runtime/nbserver-54480-open.html
+    Or copy and paste one of these URLs:
+        http://localhost:8888/?token=15cac8971b6a0b2125e05adec9c42e123ed2b04a3ff21a54
+[NotebookApp | WARNING] 404 GET /nbresuse/metrics (::1) 7.74ms referer=None
+[NotebookApp | INFO] interrupted
+[NotebookApp | CRITICAL] Shutdown confirmed
+[NotebookApp | INFO] Shutting down 0 kernels

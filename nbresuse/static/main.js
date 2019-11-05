@@ -1,7 +1,20 @@
 define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
+    // FIXME this global collectMetrics variable is a design pattern issue
+    // There needs to be a higher level object that coordinates the buttons, displays, etc.
+    var collectMetrics = false;
+
+    function isUndefined(val) {
+        if (typeof val !== 'undefined') {
+            return false;
+        }
+        return true;
+    }
+
+    function roundOut(val) {
+        return Number.parseFloat(val).toPrecision(2);
+    }
 
     function setupDOM() {
-        // FIXME: Do something cleaner to get styles in here?
         $('#maintoolbar-container').append(
             $('<div>').attr('id', 'nbresuse-display')
                         .addClass('btn-group')
@@ -18,6 +31,50 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             $('<style>').html('#nbresuse-display > span { padding-right: 5px; }')
         );
         
+    }
+
+    var UsageButton = function() {
+        var showListeners = [];
+        var hideListeners = [];
+
+        $('#maintoolbar-container').append(
+            $('<div class="btn-group"><button class="btn btn-default" id="collect_metrics">Show Usage</button></div>')
+        );
+        
+        $('#collect_metrics').click(function(test) {
+            // flip the button state
+            click();
+
+            if (collectMetrics) {
+                $('#collect_metrics').text('Hide Usage');
+                showListeners.forEach(method => method());
+            } else {
+                $('#collect_metrics').text('Show Usage');
+                hideListeners.forEach(method => method());
+            }
+        });
+
+        /**
+         * 
+         * @param {boolean} show method to execute when the user has clicked the button to show
+         * @param {function} method any method or funtion to execute on an event
+         */
+        var registerListenerMethod = function(show, method) {
+            if (show) {
+                showListeners.push(method);
+            } else {
+                hideListeners.push(method);
+            }
+        }
+
+        var click = function() {
+            collectMetrics = !collectMetrics;
+        }
+
+        return {
+            registerListenerMethod: registerListenerMethod,
+            click: click
+        }
     }
 
     var PodEvictionDisplay = function() {
@@ -136,7 +193,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                 if (!showedDisplay) {
                     showDisplay();
                 }
-                $('#nbresuse-gpu').text(gpuData);
+                $('#nbresuse-gpu').text(roundOut(gpuData));
             }
         }
 
@@ -149,8 +206,9 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
     var MemoryDisplay = function() {
         var appendDisplay = function() {
             $('#nbresuse-display').append(
-                $('<strong>').text('Memory: ')
+                $('<strong id="stats-mem">').text('Memory: ')
             ).append(
+
                 $('<span>').attr('id', 'nbresuse-mem')
                             .attr('title', 'Actively used Memory (updates every 5s)')
             );
@@ -158,23 +216,32 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
 
         var update = function(data) {
             // FIXME: Proper setups for MB and GB. MB should have 0 things
-            // after the ., but GB should have 2.    
-            var display = Math.round(data['rss'] / (1024 * 1024));
+            // after the ., but GB should have 2.  
+            try {
+                if (isUndefined(data['limits'])) {
+                    throw new Error('no memory stats');
+                }
+                var display = Math.round(data['rss'] / (1024 * 1024));
 
-            var limits = data['limits'];
-            if ('memory' in limits) {
-                if ('rss' in limits['memory']) {
-                    display += " / " + (limits['memory']['rss'] / (1024 * 1024));
+                var limits = data['limits'];
+                if ('memory' in limits) {
+                    if ('rss' in limits['memory']) {
+                        display += " / " + (limits['memory']['rss'] / (1024 * 1024));
+                    }
+                    if (limits['memory']['warn']) {
+                        $('#nbresuse-display').addClass('nbresuse-warn');
+                    } else {
+                        $('#nbresuse-display').removeClass('nbresuse-warn');
+                    }
                 }
-                if (limits['memory']['warn']) {
-                    $('#nbresuse-display').addClass('nbresuse-warn');
-                } else {
-                    $('#nbresuse-display').removeClass('nbresuse-warn');
+                if (data['limits']['memory'] !== null) {
                 }
-            }
-            if (data['limits']['memory'] !== null) {
-            }
-            $('#nbresuse-mem').text(display + ' MB');
+                $('#nbresuse-mem').text(display + ' MB');
+            } catch(err) {
+                $('#stats-mem').remove();
+                $('#nbresuse-mem').remove();
+            }  
+
         }
 
         return {
@@ -186,7 +253,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
     var CpuDisplay = function() {
         var appendDisplay = function() {
             $('#nbresuse-display').append(
-                $('<strong>').text('CPU: ')
+                $('<strong id="cpu-stats">').text('CPU: ')
             ).append(
                 $('<span>').attr('id', 'nbresuse-percent-cpu')
                             .attr('title', 'Actively used Memory (updates every 5s)')
@@ -194,7 +261,15 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
 
         var update = function(data) {
-            $('#nbresuse-percent-cpu').text(data['cpu_percent_usage'] + '%');
+            try {
+                if (isUndefined(data['cpu_percent_usage'])) {
+                    throw new Error('no cpu stats');
+                }
+                $('#nbresuse-percent-cpu').text(roundOut(data['cpu_percent_usage']) + '%');
+            } catch(err) {
+                $('#cpu-stats').remove();
+                $('#nbresuse-percent-cpu').remove();
+            }
         }
 
         return {
@@ -206,22 +281,12 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
     var MetricsHandler = function() {
         var listeners = [];
         var is404 = false;
-        var url = utils.get_body_data('baseUrl') + 'metrics';
+        var url = utils.get_body_data('baseUrl') + 'nbresuse/metrics';
         var pollInterval;
         var updateTime;
 
         // used for detecting redirects
         var xhr = new XMLHttpRequest
-        
-        var setup = function() {
-            appendButton();
-        }
-
-        var appendButton = function() {
-            $('#maintoolbar-container').append(
-                $('<div class="btn-group"><button class="btn btn-default" id="collect_metrics">Show Usage</button></div>')
-            );
-        }
 
         var setUpdateTime = function(updateTimeSec) {
             updateTime = updateTimeSec * 1000;
@@ -231,7 +296,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
          * listener must have an update and appendDisplay method
          */
         var registerListener = function(listener) {
-            listeners.push(listener)
+            listeners.push(listener);
         }
 
         var stopPoll = function() {
@@ -251,7 +316,8 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         var poll = function() {
             if (document.hidden) {
                 // return if no one is watching
-                console.log('polling stopped');
+                stopPoll();
+                collectMetrics = !collectMetrics
                 return;
             }
             if (is404) {
@@ -288,8 +354,6 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             });
         }
 
-        setup();
-
         return {
             registerListener: registerListener,
             setUpdateTime: setUpdateTime,
@@ -298,13 +362,15 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         }
     }
 
+
     var load_ipython_extension = function () {
         setupDOM();
-        var collectMetrics = false;
+        
         var memoryDisplay = MemoryDisplay();
         var cpuDisplay = CpuDisplay();
         var gpuDisplay = GPUDisplay();
         var podEvictorDisplay = PodEvictionDisplay();
+        var usageButton = UsageButton();
 
         var metricsHandler = MetricsHandler();
         metricsHandler.setUpdateTime(5);
@@ -312,12 +378,9 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         metricsHandler.registerListener(cpuDisplay);
         metricsHandler.registerListener(gpuDisplay);
         metricsHandler.registerListener(podEvictorDisplay);
-
-        $('#collect_metrics').click(function() {
-            collectMetrics = !collectMetrics;
-            collectMetrics ? metricsHandler.startPoll() : metricsHandler.stopPoll();
-        });
-    
+        
+        usageButton.registerListenerMethod(true, metricsHandler.startPoll);
+        usageButton.registerListenerMethod(false, metricsHandler.stopPoll);
     };
 
     return {
