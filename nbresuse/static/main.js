@@ -195,9 +195,14 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             }
         }
 
+        var reset = function() {
+            showedDisplay = false;
+        }
+
         return {
             update: update,
-            appendDisplay: appendDisplay
+            appendDisplay: appendDisplay,
+            reset: reset
         }
     }
 
@@ -387,6 +392,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
         
         usageButton.registerListenerMethod(true, metricsHandler.startPoll);
         usageButton.registerListenerMethod(false, metricsHandler.stopPoll);
+        usageButton.registerListenerMethod(true, gpuDisplay.reset);
     };
 
     return {
