@@ -2,7 +2,6 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
     // FIXME this global collectMetrics variable is a design pattern issue
     // There needs to be a higher level object that coordinates the buttons, displays, etc.
     var collectMetrics = false;
-    var completelyDisable = false;
 
     function isUndefined(val) {
         if (typeof val !== 'undefined') {
@@ -322,9 +321,9 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
             }
             if (is404) {
                 // stop polling if there's a 404 from metrics
-                completelyDisable = true;
                 $('#nbresuse-display').remove();
                 $('#collect_metrics').remove();
+                stopPoll();
                 return;
             }
 
@@ -345,7 +344,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                     } else if (parseInt(xhr.status) > 399) {
                         throw new Error('link broken');
                     }
-                    
+
                     // send updated data to listeners
                     for (var i = 0; i < listeners.length; i++) {
                         listeners[i].update(data)
