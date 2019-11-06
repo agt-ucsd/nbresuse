@@ -2,6 +2,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
     // FIXME this global collectMetrics variable is a design pattern issue
     // There needs to be a higher level object that coordinates the buttons, displays, etc.
     var collectMetrics = false;
+    var completelyDisable = false;
 
     function isUndefined(val) {
         if (typeof val !== 'undefined') {
@@ -263,7 +264,7 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                 if (isUndefined(data['cpu_percent_usage'])) {
                     throw new Error('no cpu stats');
                 }
-                $('#nbresuse-percent-cpu').text(roundOut(data['cpu_percent_usage']) + '%');
+                $('#nbresuse-percent-cpu').text(roundOut(data['cpu_percent_usage']));
             } catch(err) {
                 $('#cpu-stats').remove();
                 $('#nbresuse-percent-cpu').remove();
@@ -316,10 +317,14 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                 // return if no one is watching
                 stopPoll();
                 collectMetrics = !collectMetrics
+                $('#collect_metrics').text('Show Usage');
                 return;
             }
             if (is404) {
                 // stop polling if there's a 404 from metrics
+                completelyDisable = true;
+                $('#nbresuse-display').remove();
+                $('#collect_metrics').remove();
                 return;
             }
 
@@ -335,7 +340,12 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                     // stop if redirected
                     if (!xhr.responseURL.endsWith(url)) {
                         throw new Error('redirect');
-                    } 
+
+                    // stop if statuscode invalid
+                    } else if (parseInt(xhr.status) > 399) {
+                        throw new Error('link broken');
+                    }
+                    
                     // send updated data to listeners
                     for (var i = 0; i < listeners.length; i++) {
                         listeners[i].update(data)
