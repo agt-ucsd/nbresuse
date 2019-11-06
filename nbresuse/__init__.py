@@ -52,7 +52,7 @@ def get_gpu():
             for gpu in gpus:
                 loads.append(gpu.load)
             
-            total_load = round(sum(loads), 2)
+            total_load = round(sum(loads) * 100, 2)
         
         return {'gpu': total_load}
     except Exception as e:
