@@ -323,7 +323,6 @@ define(['jquery', 'base/js/utils', 'require'], function ($, utils, require) {
                 // stop polling if there's a 404 from metrics
                 $('#nbresuse-display').remove();
                 $('#collect_metrics').remove();
-                stopPoll();
                 return;
             }
 
